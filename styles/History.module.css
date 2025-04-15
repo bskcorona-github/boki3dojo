@@ -1,0 +1,223 @@
+.container {
+  min-height: 100vh;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.main {
+  padding: 2rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.statsContainer {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+  margin-bottom: 2.5rem;
+}
+
+.statCard {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.statCard h3 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.statValue {
+  font-size: 2rem;
+  font-weight: bold;
+  margin: 0;
+  color: #4caf50;
+}
+
+.historyContainer {
+  width: 100%;
+  margin-bottom: 2.5rem;
+}
+
+.historyContainer h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.historyTable {
+  width: 100%;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tableHeader {
+  display: flex;
+  background-color: #f5f5f5;
+  font-weight: bold;
+  padding: 1rem 0.5rem;
+}
+
+.historyRow {
+  display: flex;
+  padding: 1rem 0.5rem;
+  border-top: 1px solid #eee;
+}
+
+.dateColumn {
+  flex: 1;
+  min-width: 100px;
+}
+
+.problemColumn {
+  flex: 3;
+}
+
+.resultColumn,
+.timeColumn {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.problemTitle {
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+.topicTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.topicTag {
+  background-color: #e0e0e0;
+  padding: 0.3rem 0.5rem;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  color: #555;
+}
+
+.correctBadge,
+.incorrectBadge {
+  padding: 0.3rem 0.8rem;
+  border-radius: 4px;
+  font-weight: bold;
+  font-size: 0.9rem;
+}
+
+.correctBadge {
+  background-color: #e8f5e9;
+  color: #4caf50;
+}
+
+.incorrectBadge {
+  background-color: #ffebee;
+  color: #f44336;
+}
+
+.tipsContainer {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.tipsContainer h2 {
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  color: #333;
+}
+
+.tipCard {
+  background-color: #f9f9f9;
+  border-radius: 8px;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.tipCard h3 {
+  margin: 0 0 0.8rem 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.tipCard p {
+  margin: 0;
+  color: #555;
+}
+
+.backLink {
+  display: inline-block;
+  margin: 2rem 0;
+  padding: 0.5rem 1rem;
+  background-color: #f5f5f5;
+  color: #333;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  background-color: #e0e0e0;
+}
+
+@media (max-width: 768px) {
+  .statsContainer {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .historyTable {
+    font-size: 0.9rem;
+  }
+
+  .dateColumn {
+    min-width: 80px;
+  }
+}
+
+@media (max-width: 600px) {
+  .statsContainer {
+    grid-template-columns: 1fr;
+  }
+
+  .historyRow {
+    flex-direction: column;
+    padding: 1rem;
+  }
+
+  .dateColumn,
+  .problemColumn,
+  .resultColumn,
+  .timeColumn {
+    flex: 1;
+    width: 100%;
+    text-align: left;
+    justify-content: flex-start;
+    margin-bottom: 0.5rem;
+  }
+
+  .resultColumn {
+    margin: 0.5rem 0;
+  }
+}

@@ -1,0 +1,187 @@
+.container {
+  min-height: 100vh;
+  padding: 0 1rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+}
+
+.main {
+  padding: 2rem 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.title {
+  font-size: 2rem;
+  margin-bottom: 2rem;
+  color: #333;
+}
+
+.progressContainer {
+  width: 100%;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #f9f9f9;
+  border-radius: 10px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 20px;
+  background-color: #e0e0e0;
+  border-radius: 10px;
+  margin: 1rem 0;
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background-color: #4caf50;
+  transition: width 0.3s ease;
+}
+
+.progressText {
+  text-align: right;
+  font-weight: bold;
+  color: #4caf50;
+}
+
+.planContainer {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.planGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-top: 1.5rem;
+}
+
+.dayCard {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 1.5rem;
+  background-color: white;
+  position: relative;
+  transition: all 0.3s ease;
+}
+
+.dayCard.completed {
+  background-color: #f0f8f0;
+  border-color: #4caf50;
+}
+
+.dateHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.8rem;
+  border-bottom: 1px solid #eee;
+}
+
+.dateHeader h3 {
+  margin: 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.minutes {
+  background-color: #f5f5f5;
+  padding: 0.3rem 0.6rem;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+.topicList {
+  margin-bottom: 1.5rem;
+}
+
+.topicList h4 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+  color: #555;
+}
+
+.topicList ul {
+  padding-left: 1.2rem;
+  margin: 0;
+}
+
+.topicList li {
+  margin-bottom: 0.3rem;
+}
+
+.completeButton {
+  width: 100%;
+  padding: 0.8rem;
+  background-color: #4caf50;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.completeButton:hover {
+  background-color: #388e3c;
+}
+
+.completedBadge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background-color: #4caf50;
+  color: white;
+  padding: 0.4rem 0.8rem;
+  border-radius: 0 8px 0 8px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.motivationSection {
+  width: 100%;
+  margin-bottom: 2rem;
+}
+
+.motivationCard {
+  background-color: #f9f9f9;
+  border-left: 4px solid #4caf50;
+  padding: 1.5rem;
+  border-radius: 4px;
+}
+
+.motivationMessage {
+  font-style: italic;
+  color: #555;
+  margin-top: 1rem;
+}
+
+.backLink {
+  display: inline-block;
+  margin: 2rem 0;
+  padding: 0.5rem 1rem;
+  background-color: #f5f5f5;
+  color: #333;
+  border-radius: 4px;
+  text-decoration: none;
+}
+
+.backLink:hover {
+  background-color: #e0e0e0;
+}
+
+@media (max-width: 768px) {
+  .planGrid {
+    grid-template-columns: 1fr;
+  }
+}
