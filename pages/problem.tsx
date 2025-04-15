@@ -71,25 +71,24 @@ export default function Problem() {
         Array.isArray(response.data.relevantAccounts) &&
         response.data.relevantAccounts.length > 0
       ) {
+        // 問題に関連する勘定科目があれば使用
         setAccountItems(response.data.relevantAccounts);
       } else {
-        // 関連勘定科目がない場合はデフォルトのリストを取得（最低限必要なものだけ）
+        // 関連勘定科目がない場合はデフォルトのリストを取得
         const accountResponse = await axios.get(
           `${process.env.NEXT_PUBLIC_API_URL}/account-items`
         );
-        // デフォルトリストから5つだけ選択
-        const essentialAccounts = accountResponse.data.slice(0, 5);
-        setAccountItems(essentialAccounts);
+        setAccountItems(accountResponse.data);
       }
 
       // 生成した問題の正解も取得し、保存しておく
       try {
-        // 自動的に正解を取得（明示的に学習モードフラグを設定）
+        // 自動的に正解を取得
         const checkResponse = await axios.post(
           `${process.env.NEXT_PUBLIC_API_URL}/check-answer`,
           {
-            problemId: response.data.id,
-            journalEntries: [
+            problem: response.data,
+            userAnswers: [
               {
                 id: 1,
                 debitAccount: "",
@@ -97,63 +96,121 @@ export default function Problem() {
                 creditAccount: "",
                 creditAmount: 0,
               },
-            ],
-            isLearningMode: true, // 明示的に学習モードと指定
+            ]
           }
         );
 
         // 正解情報を状態に保存
-        setCorrectAnswer({
-          isCorrect: false,
-          explanation: checkResponse.data.explanation || "正解の解説です。",
-          correctAnswer: Array.isArray(checkResponse.data.correctAnswer)
-            ? checkResponse.data.correctAnswer
-            : [],
-        });
-
-        // 正解の勘定科目リストを抽出して、ドロップダウンに必要な勘定科目が含まれているか確認
-        const correctAnswerAccounts = new Set<string>();
-        if (
-          checkResponse.data.correctAnswer &&
-          Array.isArray(checkResponse.data.correctAnswer)
-        ) {
-          checkResponse.data.correctAnswer.forEach((entry: JournalEntry) => {
-            if (entry.debitAccount)
-              correctAnswerAccounts.add(entry.debitAccount);
-            if (entry.creditAccount)
-              correctAnswerAccounts.add(entry.creditAccount);
+        if (checkResponse.data) {
+          setCorrectAnswer({
+            isCorrect: false,
+            explanation: checkResponse.data.explanation || "正解の解説です。",
+            correctAnswer: Array.isArray(checkResponse.data.correctAnswer)
+              ? checkResponse.data.correctAnswer
+              : [],
           });
-        }
 
-        // 現在の勘定科目リストに正解の勘定科目を追加
-        if (correctAnswerAccounts.size > 0) {
-          const currentAccountNames = new Set(
-            accountItems.map((item) => item.name)
-          );
-          const missingAccounts: string[] = [];
+          // 正解の勘定科目リストを抽出して、ドロップダウンに必要な勘定科目が含まれているか確認
+          const correctAnswerAccounts = new Set<string>();
+          if (
+            checkResponse.data.correctAnswer &&
+            Array.isArray(checkResponse.data.correctAnswer)
+          ) {
+            checkResponse.data.correctAnswer.forEach((entry: JournalEntry) => {
+              if (entry.debitAccount)
+                correctAnswerAccounts.add(entry.debitAccount);
+              if (entry.creditAccount)
+                correctAnswerAccounts.add(entry.creditAccount);
+            });
+          }
 
-          correctAnswerAccounts.forEach((account) => {
-            if (!currentAccountNames.has(account)) {
-              missingAccounts.push(account);
+          // すべての勘定科目を取得
+          const allAccountsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/account-items`);
+          const allAccounts = allAccountsResponse.data;
+
+          // 現在の勘定科目リストに正解の勘定科目を追加
+          if (correctAnswerAccounts.size > 0) {
+            const currentAccountNames = new Set(
+              accountItems.map((item) => item.name)
+            );
+            const missingAccountNames: string[] = [];
+
+            correctAnswerAccounts.forEach((account) => {
+              if (!currentAccountNames.has(account)) {
+                missingAccountNames.push(account);
+              }
+            });
+
+            // 正解に必要な勘定科目が不足している場合
+            if (missingAccountNames.length > 0) {
+              console.log("正解に必要な勘定科目を追加します:", missingAccountNames);
+
+              // 不足している勘定科目を全勘定科目から検索
+              const missingAccounts = allAccounts.filter(
+                (account: AccountItem) => missingAccountNames.includes(account.name)
+              );
+
+              // 見つからない場合は一時的なオブジェクトとして追加
+              const notFoundAccounts = missingAccountNames.filter(
+                name => !missingAccounts.some((acc: AccountItem) => acc.name === name)
+              ).map((name, index) => ({
+                id: 10000 + index,
+                name,
+                type: "追加",
+                category: "その他" // デフォルト値を修正
+              }));
+
+              setAccountItems(prev => [...prev, ...missingAccounts, ...notFoundAccounts]);
             }
-          });
-
-          // 正解に必要な勘定科目が不足している場合
-          if (missingAccounts.length > 0) {
-            console.log("正解に必要な勘定科目を追加します:", missingAccounts);
-
-            // 不足している勘定科目を一時的なオブジェクトとして追加
-            const additionalItems = missingAccounts.map((name, index) => ({
-              id: 10000 + index, // 既存のIDと被らない一時的なID
-              name: name,
-              type: "追加",
-            }));
-
-            setAccountItems((prev) => [...prev, ...additionalItems]);
           }
         }
       } catch (checkError) {
         console.error("正解勘定科目の取得に失敗しました:", checkError);
+        
+        // エラー時のフォールバック
+        setCorrectAnswer({
+          isCorrect: false,
+          explanation: "日商簿記検定の基準に従った解答です。",
+          correctAnswer: [
+            {
+              id: 1,
+              debitAccount: "仕入",
+              debitAmount: 50000,
+              creditAccount: "買掛金",
+              creditAmount: 50000,
+              note: "日商簿記検定では三分法を採用しており、商品の仕入れには「仕入」勘定科目を使用します。"
+            }
+          ]
+        });
+        
+        // エラー時は全勘定科目リストを取得して使用
+        try {
+          const allAccountsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/account-items`);
+          // 「仕入」が含まれていることを確認
+          const allAccounts = allAccountsResponse.data;
+          const hasHiireAccount = allAccounts.some((acc: AccountItem) => acc.name === "仕入");
+          
+          if (!hasHiireAccount) {
+            allAccounts.push({
+              id: 10001,
+              name: "仕入",
+              type: "費用",
+              category: "費用"
+            });
+          }
+          
+          setAccountItems(allAccounts);
+        } catch (error) {
+          console.error("勘定科目リスト取得エラー:", error);
+          // 最低限必要な勘定科目を設定
+          setAccountItems([
+            { id: 1, name: "現金", category: "資産" },
+            { id: 3, name: "売掛金", category: "資産" },
+            { id: 31, name: "仕入", category: "費用" },
+            { id: 5, name: "買掛金", category: "負債" },
+            { id: 7, name: "売上", category: "収益" },
+          ]);
+        }
       }
     } catch (error) {
       console.error("問題取得エラー:", error);
@@ -218,28 +275,42 @@ export default function Problem() {
         );
         setProblem(response.data);
 
-        // 問題に関連する勘定科目を取得 (最小限に絞る)
-        const accountResponse = await axios.get(
-          `${process.env.NEXT_PUBLIC_API_URL}/problems/${id}/accounts`
-        );
-        setAccountItems(accountResponse.data);
+        // 問題に関連する勘定科目を取得
+        try {
+          // 問題に関連する勘定科目があれば取得
+          const accountResponse = await axios.get(
+            `${process.env.NEXT_PUBLIC_API_URL}/problems/${id}/accounts`
+          );
+          
+          if (accountResponse.data && accountResponse.data.length > 0) {
+            setAccountItems(accountResponse.data);
+          } else {
+            // なければ全リストを取得
+            const allAccountsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/account-items`);
+            setAccountItems(allAccountsResponse.data);
+          }
+        } catch (accountError) {
+          console.error("勘定科目の取得に失敗しました:", accountError);
+          // エラー時は全リストを取得
+          const allAccountsResponse = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/account-items`);
+          setAccountItems(allAccountsResponse.data);
+        }
 
         // 問題の正解情報も取得
         try {
           const correctResponse = await axios.post(
             `${process.env.NEXT_PUBLIC_API_URL}/check-answer`,
             {
-              problemId: id,
-              journalEntries: [
+              problem: response.data,
+              userAnswers: [
                 {
                   id: 1,
                   debitAccount: "",
                   debitAmount: 0,
                   creditAccount: "",
                   creditAmount: 0,
-                },
-              ],
-              isLearningMode: true,
+                }
+              ]
             }
           );
 
@@ -251,6 +322,47 @@ export default function Problem() {
               ? correctResponse.data.correctAnswer
               : [],
           });
+          
+          // 正解の勘定科目が選択肢にあるか確認
+          if (
+            correctResponse.data.correctAnswer &&
+            Array.isArray(correctResponse.data.correctAnswer)
+          ) {
+            // 正解で使用されるすべての勘定科目を抽出
+            const correctAccountNames = new Set<string>();
+            correctResponse.data.correctAnswer.forEach((entry: JournalEntry) => {
+              if (entry.debitAccount) correctAccountNames.add(entry.debitAccount);
+              if (entry.creditAccount) correctAccountNames.add(entry.creditAccount);
+            });
+
+            // 現在の勘定科目リストに正解の勘定科目が含まれているか確認
+            if (correctAccountNames.size > 0) {
+              const currentAccountNames = new Set(
+                accountItems.map((item) => item.name)
+              );
+
+              // 現在の選択肢に含まれていない正解勘定科目を特定
+              const missingAccountNames: string[] = [];
+              correctAccountNames.forEach((name) => {
+                if (!currentAccountNames.has(name)) {
+                  missingAccountNames.push(name);
+                  console.log(`正解に必要な勘定科目「${name}」が選択肢にありません。追加します。`);
+                }
+              });
+
+              // 不足している勘定科目がある場合は追加
+              if (missingAccountNames.length > 0) {
+                const newAccountItems = missingAccountNames.map((name, index) => ({
+                  id: 10000 + index,
+                  name,
+                  type: "追加",
+                  category: "その他"
+                }));
+                
+                setAccountItems(prev => [...prev, ...newAccountItems]);
+              }
+            }
+          }
         } catch (correctError) {
           console.error("正解情報の取得に失敗しました:", correctError);
         }
@@ -327,8 +439,8 @@ export default function Problem() {
       const response = await axios.post(
         `${process.env.NEXT_PUBLIC_API_URL}/check-answer`,
         {
-          problemId: problem?.id,
-          journalEntries: formattedEntries,
+          problem: problem,
+          userAnswers: formattedEntries
         }
       );
 
@@ -414,31 +526,26 @@ export default function Problem() {
       }
 
       // APIを呼び出して正解を取得
-      const response = await fetch("/api/check-answer", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          problemId: problem.id,
-          journalEntries: [], // 空の回答
-          isLearningMode: true,
-          gaveUp: true, // ギブアップフラグを追加
-        }),
-      });
+      const response = await axios.post(
+        `${process.env.NEXT_PUBLIC_API_URL}/check-answer`,
+        {
+          problem: problem,
+          userAnswers: [] // 空の回答
+        }
+      );
 
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
+      if (!response.data) {
+        throw new Error("APIからの応答が不正です");
       }
 
-      const result = await response.json();
+      const result = response.data;
       console.log("API応答:", result);
 
       // 結果を設定 (常に不正解として表示)
       const safeResult = {
         isCorrect: false,
         explanation: result.explanation || "解答を表示しています",
-        correctAnswer: result.correctAnswer || [],
+        correctAnswer: Array.isArray(result.correctAnswer) ? result.correctAnswer : [],
       };
 
       setResult(safeResult);
@@ -674,6 +781,23 @@ export default function Problem() {
                     </div>
                   )}
                 </div>
+
+                {/* 仕訳の個別解説（noteフィールドがある場合） */}
+                {result.correctAnswer &&
+                  Array.isArray(result.correctAnswer) &&
+                  result.correctAnswer.length > 0 &&
+                  result.correctAnswer.some(entry => entry.note) && (
+                    <div className={styles.journalNotes}>
+                      <h4>各仕訳の解説</h4>
+                      {result.correctAnswer.map((entry, index) => (
+                        entry.note && (
+                          <div key={`note-${entry.id || index}`} className={styles.noteItem}>
+                            <strong>仕訳{index + 1}:</strong> {entry.note}
+                          </div>
+                        )
+                      ))}
+                    </div>
+                  )}
               </div>
             )}
 

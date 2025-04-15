@@ -28,6 +28,7 @@ export interface JournalEntry {
   debitAmount: number;
   creditAccount: string;
   creditAmount: number;
+  note?: string; // 個別の仕訳に対する解説
 }
 
 // 回答チェック結果の型定義
